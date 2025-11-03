@@ -47,12 +47,6 @@ def load_vector_store():
         st.error(f"Error al cargar la base de datos vectorial FAISS. Asegúrate de que el directorio 'faiss_index_local' exista. {e}")
         st.stop()
 
-# --- MANTENER ESTE CACHE (¡Correcto!) ---
-@st.cache_resource 
-def load_vector_store():
-    # ... código para cargar FAISS ...
-    return vector_store
-
 # --- QUITAR ESTE CACHE (¡Corrige el Error!) ---
 # Ya no tiene el decorador @st.cache_resource
 def setup_qa_chain(vector_db): 
