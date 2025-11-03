@@ -23,10 +23,13 @@ from langchain_community.vectorstores import FAISS
 # Carga las variables de entorno (como GOOGLE_API_KEY)
 load_dotenv()
 
-# Verifica si la API Key está disponible
-if not os.getenv("GOOGLE_API_KEY"):
-    st.error("Error: La variable de entorno GOOGLE_API_KEY no está configurada.")
+# El código debe buscar la clave en st.secrets
+if 'GOOGLE_API_KEY' not in st.secrets:
+    st.error("Error: La clave GOOGLE_API_KEY no se encontró en Streamlit Secrets.")
     st.stop()
+
+# Asigna la clave como variable de entorno para que el SDK de LangChain/Google la encuentre
+os.environ['GOOGLE_API_KEY'] = st.secrets['GOOGLE_API_KEY']
 
 
 @st.cache_resource
