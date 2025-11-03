@@ -33,10 +33,10 @@ os.environ['GOOGLE_API_KEY'] = st.secrets['GOOGLE_API_KEY']
 
 
 @st.cache_resource
-def load_vector_store():
+def load_vector_store(index_hash):
     """
-    Carga el índice FAISS pre-construido.
-    Nota: Debe haber ejecutado el código anterior para crear 'faiss_index_local'
+    Carga el índice FAISS pre-construido. 
+    'index_hash' se usa solo para invalidar el caché cuando el archivo cambia.
     """
     try:
         # Los embeddings son necesarios para cargar el índice FAISS
@@ -44,10 +44,20 @@ def load_vector_store():
         vector_store = FAISS.load_local("faiss_index_local", embeddings, allow_dangerous_deserialization=True)
         return vector_store
     except Exception as e:
-        st.error(f"Error al cargar la base de datos vectorial FAISS. Asegúrate de que el directorio 'faiss_index_local' exista. {e}")
+        # Manejo de error si el archivo no existe
+        st.error(f"Error al cargar la base de datos FAISS: {e}")
         st.stop()
 
-# --- QUITAR ESTE CACHE (¡Corrige el Error!) ---
+# --- Nueva utilidad para obtener el hash (timestamp) ---
+def get_faiss_index_hash(db_path="faiss_index_local"):
+    """Retorna el timestamp de modificación del archivo principal de FAISS."""
+    # Usamos index.faiss o index.pkl como indicador de que toda la carpeta ha cambiado
+    index_file_path = os.path.join(db_path, "index.faiss")
+    if os.path.exists(index_file_path):
+        # Devuelve el tiempo de la última modificación
+        return os.path.getmtime(index_file_path) 
+    return 0 # Devuelve 0 si no existe (para forzar la creación)
+    
 # Ya no tiene el decorador @st.cache_resource
 def setup_qa_chain(vector_db): 
     """
@@ -73,14 +83,14 @@ def main():
     """
     Función principal de la aplicación Streamlit.
     """
-    st.set_page_config(page_title="🤖 Chatbot RAG con Gemini", page_icon="📄")
+    st.set_page_config(page_title="🤖 Chatbot BBVA Research", page_icon="📄")
 
     # Título y Descripción con formato "bonito"
-    st.title("🤖 Chatbot RAG | Reportes Documentales")
+    st.title("🤖 Chatbot BBVA Research | Estudios Económicos")
     st.markdown("""
         **Pregunta a tus documentos** usando el modelo **Gemini 2.5 Flash**.
-        La IA recupera información directamente de la base de datos vectorial (FAISS)
-        que has creado.
+        Consulte por información relacionada a nuestro reportes de PBI, Inflación, Mercado Laboral, Expectativas
+        Macroeconómicas, Situación Fiscal, entre otros.
     """)
     st.divider()
 
@@ -89,7 +99,8 @@ def main():
         st.session_state.messages = []
 
     # 1. Cargar Base de Datos y Configurar Cadena
-    vector_db = load_vector_store()
+    current_index_hash = get_faiss_index_hash()
+    vector_db = load_vector_store(current_index_hash)
     qa_chain = setup_qa_chain(vector_db)
 
     # 2. Mostrar mensajes de chat anteriores
