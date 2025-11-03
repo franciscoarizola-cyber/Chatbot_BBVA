@@ -47,14 +47,21 @@ def load_vector_store():
         st.error(f"Error al cargar la base de datos vectorial FAISS. Asegúrate de que el directorio 'faiss_index_local' exista. {e}")
         st.stop()
 
-@st.cache_resource
-def setup_qa_chain(vector_db):
+# --- MANTENER ESTE CACHE (¡Correcto!) ---
+@st.cache_resource 
+def load_vector_store():
+    # ... código para cargar FAISS ...
+    return vector_store
+
+# --- QUITAR ESTE CACHE (¡Corrige el Error!) ---
+# Ya no tiene el decorador @st.cache_resource
+def setup_qa_chain(vector_db): 
     """
     Configura el LLM (Gemini) y la cadena de recuperación conversacional (RAG).
     """
     # Inicializa el LLM de Google
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
-
+    
     # Crea el recuperador (Retriever)
     retriever = vector_db.as_retriever()
 
@@ -62,10 +69,9 @@ def setup_qa_chain(vector_db):
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
-        return_source_documents=False  # No mostramos el documento fuente para un formato más limpio
+        return_source_documents=False  
     )
     return qa_chain
-
 
 # --- LÓGICA PRINCIPAL DE STREAMLIT ---
 
